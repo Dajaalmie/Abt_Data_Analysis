@@ -855,15 +855,15 @@ def build_summary_prompt(all_tables: List[Dict[str, Any]]) -> str:
 Generate a summary of findings based only on the interpreted tables below.
 
 Rules:
-- Start with exactly: The summary of findings based on the tables is presented below:
-- Use numbered bullet points (1., 2., 3., etc.)
-- Base the summary on the tables directly, using Table 1, Table 2, Table 3, Table 4, Table 5, etc.
-- Keep language simple and direct
-- Each point should be a complete sentence that captures a key finding from the corresponding table
-- Do not add statistical details in the summary - focus on the main conclusions
-- Use all {total_tables} tables
-- Do not group the summary under research questions or hypotheses
-- Do not separate demographic findings from other tables
+– Start with exactly: The summary of findings based on the tables is presented below:
+– Use numbered bullet points (1., 2., 3., etc.)
+– Base the summary on the tables directly, without mentioning table numbers
+– Keep language simple and direct
+– Each point should be a complete sentence that captures a key finding from the corresponding table
+– Do not add statistical details in the summary – focus on the main conclusions
+– Use all {total_tables} tables
+– Do not group the summary under research questions or hypotheses
+– Do not separate demographic findings from other tables
 
 INTERPRETED FINDINGS:
 {joined}
@@ -877,36 +877,24 @@ def build_discussion_prompt(non_demo_tables: List[Dict[str, Any]], empirical_rev
         table_number_match = re.search(r"Table\s+(\d+)", table["apa_title"], re.IGNORECASE)
         actual_table_number = table_number_match.group(1) if table_number_match else str(i)
         findings_text += f"Table {actual_table_number} ({table['apa_title']}): {table['interpretation']}\n\n"
-
     return f"""
 You are an expert academic writing assistant.
 Generate DISCUSSION OF FINDINGS using the exact format provided below.
 
 Rules:
-1. Use "Findings from research question one revealed that", "Findings from Research Question Two indicated that", "Findings from Research Question Three showed that", etc. for research questions
-2. Use "Findings from Hypothesis One showed that", "Findings from Hypothesis Two revealed that", etc. for hypotheses
-3. For each table, write exactly one comprehensive paragraph
-4. Compare findings with previous studies from the empirical review only
-5. Use exactly one citation per paragraph from the empirical review only
-6. Add a REFERENCES section at the end
-7. Do not use chapter one, chapter three, methodology, or other non-empirical sections
-8. Follow this exact format for each paragraph:
+1. Use "Finding from Table One revealed that", "Finding from Table Two showed that", "Finding from Table Three indicated that", etc. for all tables
+2. For each table, write exactly one comprehensive paragraph
+3. Compare findings with previous studies from the empirical review only
+4. Use exactly one citation per paragraph from the empirical review only
+5. Add a REFERENCES section at the end
+6. Do not use chapter one, chapter three, methodology, or other non-empirical sections
+7. Follow this exact format for each paragraph:
 
-"Findings from research question one revealed that [main finding]. [Additional details]. This aligns with the work of [Author(s)] ([Year]), who found that [comparison finding]. While both studies agree that [common point], the present study uniquely highlights [unique contribution] in the Nigerian context."
+"Finding from Table One revealed that [main finding]. [Additional details]. This aligns with the work of [Author(s)] ([Year]), who found that [comparison finding]. While both studies agree that [common point], the present study uniquely highlights [unique contribution] in the Nigerian context."
 
-"Findings from Research Question Two indicated that [main finding]. [Additional details]. These results are supported by [Author(s)] ([Year]), who found [comparison finding]. While their study emphasized [their focus], the present study narrows the lens to [current focus], offering a context-specific contribution to Nigerian secondary education research."
+"Finding from Table Two showed that [main finding]. [Additional details]. These results are supported by [Author(s)] ([Year]), who found [comparison finding]. While their study emphasized [their focus], the present study narrows the lens to [current focus], offering a context-specific contribution to Nigerian secondary education research."
 
-"Findings from Research Question Three showed that [main finding]. [Additional details]. This corresponds with [Author(s)] ([Year]), who also found [comparison finding]. Both studies affirm that [common finding]; however, while [Author(s)] focused on [their focus], this study expands generalizability by focusing on [current focus], capturing broader patterns in [broader context]."
-
-"Findings from Research Question Four revealed that [main finding]. [Additional details]. This somewhat aligns with [Author(s)] ([Year]), whose work suggested [comparison finding]. Though [Author(s)] focused more on [their focus], both studies acknowledge that [common issue]."
-
-"Findings from Research Question Five showed that [main finding]. [Additional details]. This is consistent with [Author(s)] ([Year]), who found that [comparison finding]. However, the current study innovates by [unique contribution], suggesting that [unique insight]."
-
-"Findings from Hypothesis One showed [main finding]. This contrasts with [Author(s)] ([Year]), who found [comparison finding]. The discrepancy may be explained by [explanation]."
-
-"Findings from Hypothesis Two revealed [main finding]. This is similar to [Author(s)] ([Year]), who found [comparison finding]. Both studies reveal that [common point]. Yet, this study uniquely emphasizes [unique emphasis]."
-
-"Findings from Hypothesis Three demonstrated [main finding]. This finding echoes [Author(s)] ([Year]), whose [analysis type] showed [comparison finding]. Both findings highlight that [common conclusion]. However, while [Author(s)] emphasized [their emphasis], the present study strengthens the argument by [current contribution]."
+"Finding from Table Three indicated that [main finding]. [Additional details]. This corresponds with [Author(s)] ([Year]), who also found [comparison finding]. Both studies affirm that [common finding]; however, while [Author(s)] focused on [their focus], this study expands generalizability by focusing on [current focus], capturing broader patterns in [broader context]."
 
 FINDINGS TO DISCUSS:
 {findings_text}
@@ -953,7 +941,9 @@ def build_comprehensive_report_prompt(non_demo_tables: List[Dict[str, Any]], emp
     sorted_tables = sort_for_final_output(non_demo_tables)
     findings_text = ""
     for i, table in enumerate(sorted_tables, start=1):
-        findings_text += f"Table {i} ({table['apa_title']}): {table['interpretation']}\n\n"
+        table_number_match = re.search(r"Table\s+(\d+)", table["apa_title"], re.IGNORECASE)
+        actual_table_number = table_number_match.group(1) if table_number_match else str(i)
+        findings_text += f"Table {actual_table_number} ({table['apa_title']}): {table['interpretation']}\n\n"
 
     return f"""
 Generate a comprehensive academic report with the following sections in this exact order:
@@ -967,11 +957,15 @@ Generate a comprehensive academic report with the following sections in this exa
 
 Rules for DISCUSSION OF FINDINGS:
 - Write exactly one paragraph for each interpreted non-demographic table
+- Use "Finding from Table One revealed that", "Finding from Table Two showed that", "Finding from Table Three indicated that", etc. for all tables
 - Use exactly one citation per paragraph from the empirical review only
 - If you cannot find a citation in the empirical review that truly aligns with the finding, do NOT invent one
 - Instead write clearly: "No directly aligned citation was found in the empirical review for this finding."
 - Add a REFERENCES section at the end using only studies actually cited in the discussion
 - Do not fabricate authors, years, journal names, or assertions
+- Follow this exact format for each paragraph:
+  "Finding from Table One revealed that [main finding]. [Additional details]. This aligns with the work of [Author(s)] ([Year]), who found that [comparison finding]. While both studies agree that [common point], the present study uniquely highlights [unique contribution] in the Nigerian context."
+- Use table-based format rules for discussion section
 
 Rules for CONCLUSION:
 - Exactly 200 words in one paragraph
@@ -980,25 +974,29 @@ Rules for CONCLUSION:
 Rules for IMPLICATION OF THE STUDY:
 - Numbered points
 - Practical and concise
-- Based on the findings and study context
+- Based on findings and study context
 - Minimum of 7 implications
+- Keep each point brief and direct
 
 Rules for RECOMMENDATIONS:
 - Numbered points
 - Minimum of 7 recommendations
-- Based on the findings
+- Based on findings
+- Keep each recommendation brief and direct
 
 Rules for LIMITATION OF THE STUDY:
 - Numbered points
 - Minimum of 7 limitations
-- Use the study context and the research questions where appropriate
+- Use study context and research questions where appropriate
 - Be realistic and concise
+- Keep each limitation brief and direct
 
 Rules for SUGGESTIONS FOR FUTURE RESEARCH:
 - Numbered points
 - Minimum of 7 suggestions
-- Use the research questions and study context where appropriate
+- Use research questions and study context where appropriate
 - Be specific and concise
+- Keep each suggestion brief and direct
 
 FINDINGS TO USE:
 {findings_text}
